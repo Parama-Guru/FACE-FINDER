@@ -27,7 +27,8 @@ def main():
     uploaded_file = st.file_uploader("Choose an image to search for", type=['png', 'jpg', 'jpeg'])
     
     if uploaded_file is not None:
-            clear_directory(output_dir,upload_dir)
+            path=[upload_dir,output_dir]
+            clear_directory(path)
             image = Image.open(uploaded_file)
             st.image(image, caption='Query Image', use_container_width=True)
             if st.button("Search for Matches"):

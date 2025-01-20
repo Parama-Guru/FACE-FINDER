@@ -18,12 +18,13 @@ def load_directory(pickle_path):
     with open(pickle_path, 'rb') as file:
         return pickle.load(file)
     
-def clear_directory(directory):
+def clear_directory(path):
     # Delete all files in the directory
-    for file in os.listdir(directory):
-        file_path = os.path.join(directory, file)
-        if os.path.isfile(file_path):
-            os.remove(file_path)
+    for directory in path:
+        for file in os.listdir(directory):
+            file_path = os.path.join(directory, file)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
 
 def store_images(numpy_arrays,output_directory):
     clear_directory(output_directory)
