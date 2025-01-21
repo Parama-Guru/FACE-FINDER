@@ -19,7 +19,6 @@ def copy_image(source_path, destination_dir):
     except Exception as e:
         print(f"Error copying image: {e}")
 
-
 def process_image(input_image_path, image_path, output_dir):
     try:
         print(f"Processing image: {image_path}")
@@ -27,9 +26,9 @@ def process_image(input_image_path, image_path, output_dir):
         obj=DeepFace.extract_faces(img_path=image_path,enforce_detection=False,detector_backend="opencv")
         input=DeepFace.extract_faces(img_path=input_image_path,detector_backend="opencv",enforce_detection=False)
         for face in obj:
-            response=DeepFace.verify(input[0]['face'],face['face'],model_name='Facenet512',enforce_detection=False)
+            response=DeepFace.verify(input[0]['face'],face['face'],model_name='VGG-Face',enforce_detection=False)
             if response['verified'] == True:
-                copy_image(image_path,output_dir)
+                #copy_image(image_path,output_dir)
                 end_time = time.time()
                 print(f"Image {image_path} verification successful. Time taken: {end_time - start_time:.4f} seconds")
                 return True
@@ -51,7 +50,6 @@ def process_chunk(args):
 def parallel_process_images(input_image_path, image_dir, output_dir):
     # Dynamically get the number of CPU cores
     num_cores = multiprocessing.cpu_count()
-    
     # Ensure the output directory exists
     os.makedirs(output_dir, exist_ok=True)
 
