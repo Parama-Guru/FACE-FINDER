@@ -21,6 +21,15 @@ FACE-FINDER is a face detection and recognition application that uses computer v
 
 ### Steps
 1. **Clone the Repository**:
-   ```bash
+   '''bash
    git clone https://github.com/Parama-Guru/FACE-FINDER.git
    cd FACE-FINDER
+   cd another_approach
+2. **Preprocessin phase**:
+   change the pathto ur directory consist of photos
+   '''bash
+   python preprocess.py
+3. **Run the Application**:
+   change the path of the pickle file if needed
+   '''bash
+   streamlit run app.py
