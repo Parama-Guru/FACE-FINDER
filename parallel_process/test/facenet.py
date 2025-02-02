@@ -1779,20 +1779,116 @@ def resize_image(img: np.ndarray, target_size: Tuple[int, int]) -> np.ndarray:
         img = (img.astype(np.float32) / 255.0).astype(np.float32)
 
     return img
+
+import concurrent.futures
+from multiprocessing import Process, cpu_count, Lock
+import os
+import numpy as np
+import cv2
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import GlobalAveragePooling2D, Input, Lambda, MaxPooling2D
+from tensorflow.keras import backend as K
+from tensorflow.keras.preprocessing import image
+import logging
+
+# Configure logging
+logging.basicConfig(filename='facenet_processing.log', level=logging.INFO, 
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+
+class FaceNetProcessor:
+    def __init__(self):
+        # Initialize model once per process
+        self.FaceNet = load_facenet512d_model()
+        self.target_size = (160, 160)  # FaceNet input size
+
+    def process_image(self, img_path):
+        try:
+            img = cv2.imread(img_path)
+            if img is None:
+                logging.error(f"Failed to load image: {img_path}")
+                return None, img_path
+            
+            img = np.array(img)
+            img = img[:, :, ::-1]  # BGR to RGB
+            img = resize_image(img, target_size=self.target_size)
+            img = normalize_input(img=img, normalization="Facenet2018")
+            embedding = self.FaceNet.predict(img)  # Using model's predict method
+            return embedding, img_path
+        except Exception as e:
+            logging.error(f"Error processing {img_path}: {str(e)}")
+            return None, img_path
+
+def process_batch(image_paths, output_file, process_id, file_lock):
+    # Create one FaceNetProcessor instance per process
+    processor = FaceNetProcessor()
+    
+    def process_with_threads(paths):
+        # Use ThreadPoolExecutor for parallel processing within the process
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+            futures = [executor.submit(processor.process_image, path) for path in paths]
+            
+            results = []
+            for future in concurrent.futures.as_completed(futures):
+                embedding, img_path = future.result()
+                if embedding is not None:
+                    results.append((embedding, img_path))
+            
+            # Write results in batch with lock
+            with file_lock:
+                with open(output_file, 'a') as f:
+                    for embedding, img_path in results:
+                        f.write(f"id: {process_id}, image path: {img_path}\n")
+                        logging.info(f"Processed and logged: {img_path}")
+            return len(results)
+    
+    # Process images in smaller batches
+    batch_size = 10
+    total_processed = 0
+    for i in range(0, len(image_paths), batch_size):
+        batch = image_paths[i:i + batch_size]
+        total_processed += process_with_threads(batch)
+    
+    return total_processed
+
 def main():
-    FaceNet = FaceNet512dClient
-    Model=FaceNet()
-    img_path = "/Users/guru/proj-git/Face-Finder/parallel_process/test/images/face_0.jpg" 
-    target_size=Model.input_shape
-    img = cv2.imread(img_path)
-    img = np.array(img)
-    img = img[:, :, ::-1]
-    img = resize_image(img, target_size=(target_size[1], target_size[0]))
-    img = normalize_input(img=img, normalization="Facenet2018")
-    embedding = Model.forward(img=img)
-    print(len(embedding))
-    print(type(embedding))
-    torch_data=torch.tensor(embedding).unsqueeze(0).numpy()
-    print(torch_data)
+    image_directory = "/Users/guru/proj-git/Face-Finder/parallel_process/test/images"
+    output_file = "embeddings.txt"
+    
+    # Clear output file
+    with open(output_file, 'w') as f:
+        f.write("")
+    
+    if os.path.exists(image_directory):
+        image_paths = [
+            os.path.join(image_directory, filename) 
+            for filename in os.listdir(image_directory) 
+            if filename.lower().endswith(('.png', '.jpg', '.jpeg'))
+        ]
+        
+        # Determine number of processes
+        num_processes = min(cpu_count(), 4)  # Limit to 4 processes
+        
+        # Split images among processes
+        chunks = np.array_split(image_paths, num_processes)
+        
+        # Start processes
+        processes = []
+        file_lock = Lock()  # Ensure file writes are synchronized
+        for i, chunk in enumerate(chunks):
+            p = Process(
+                target=process_batch,
+                args=(chunk.tolist(), output_file, i, file_lock)
+            )
+            processes.append(p)
+            p.start()
+        
+        # Wait for all processes to complete
+        for p in processes:
+            p.join()
+        
+        logging.info(f"Processing complete. Results written to {output_file}")
+    else:
+        logging.error(f"Directory not found: {image_directory}")
+
 if __name__ == "__main__":
-    main()
+    main()  
