@@ -1,0 +1,23 @@
+2025-02-02 15:41:54,312 - INFO - Processed and logged: /Users/guru/proj-git/Face-Finder/parallel_process/test/images/IMG_5411_face_5.jpeg
+2025-02-02 15:41:54,312 - INFO - Processed and logged: /Users/guru/proj-git/Face-Finder/parallel_process/test/images/IMG_5411_face_8.jpeg
+2025-02-02 15:41:54,313 - INFO - Processed and logged: /Users/guru/proj-git/Face-Finder/parallel_process/test/images/IMG_5108_face_7.jpeg
+2025-02-02 15:41:54,313 - INFO - Processed and logged: /Users/guru/proj-git/Face-Finder/parallel_process/test/images/IMG_5108_face_10.jpeg
+2025-02-02 15:41:54,313 - INFO - Processed and logged: /Users/guru/proj-git/Face-Finder/parallel_process/test/images/IMG_5108_face_6.jpeg
+2025-02-02 15:41:54,313 - INFO - Processed and logged: /Users/guru/proj-git/Face-Finder/parallel_process/test/images/IMG_5411_face_4.jpeg
+2025-02-02 15:41:57,157 - INFO - Processed and logged: /Users/guru/proj-git/Face-Finder/parallel_process/test/images/IMG_5411_face_7.jpeg
+2025-02-02 15:41:57,158 - INFO - Processed and logged: /Users/guru/proj-git/Face-Finder/parallel_process/test/images/IMG_5108_face_4.jpeg
+2025-02-02 15:41:57,158 - INFO - Processed and logged: /Users/guru/proj-git/Face-Finder/parallel_process/test/images/IMG_5108_face_5.jpeg
+2025-02-02 15:41:57,158 - INFO - Processed and logged: /Users/guru/proj-git/Face-Finder/parallel_process/test/images/IMG_5108_face_8.jpeg
+2025-02-02 15:41:57,158 - INFO - Processed and logged: /Users/guru/proj-git/Face-Finder/parallel_process/test/images/IMG_5108_face_9.jpeg
+2025-02-02 15:41:57,226 - INFO - Processed and logged: /Users/guru/proj-git/Face-Finder/parallel_process/test/images/IMG_5411_face_1.jpeg
+2025-02-02 15:41:57,227 - INFO - Processed and logged: /Users/guru/proj-git/Face-Finder/parallel_process/test/images/IMG_5108_face_3.jpeg
+2025-02-02 15:41:57,227 - INFO - Processed and logged: /Users/guru/proj-git/Face-Finder/parallel_process/test/images/IMG_5411_face_6.jpeg
+2025-02-02 15:41:57,227 - INFO - Processed and logged: /Users/guru/proj-git/Face-Finder/parallel_process/test/images/IMG_5108_face_2.jpeg
+2025-02-02 15:41:57,227 - INFO - Processed and logged: /Users/guru/proj-git/Face-Finder/parallel_process/test/images/IMG_5411_face_0.jpeg
+2025-02-02 15:41:57,386 - INFO - Processed and logged: /Users/guru/proj-git/Face-Finder/parallel_process/test/images/IMG_5108.jpeg
+2025-02-02 15:41:57,387 - INFO - Processed and logged: /Users/guru/proj-git/Face-Finder/parallel_process/test/images/IMG_5411_face_3.jpeg
+2025-02-02 15:41:57,387 - INFO - Processed and logged: /Users/guru/proj-git/Face-Finder/parallel_process/test/images/IMG_5108_face_1.jpeg
+2025-02-02 15:41:57,387 - INFO - Processed and logged: /Users/guru/proj-git/Face-Finder/parallel_process/test/images/IMG_5411_face_2.jpeg
+2025-02-02 15:41:57,387 - INFO - Processed and logged: /Users/guru/proj-git/Face-Finder/parallel_process/test/images/IMG_5108_face_0.jpeg
+2025-02-02 15:41:57,387 - INFO - Processed and logged: /Users/guru/proj-git/Face-Finder/parallel_process/test/images/IMG_5411.jpeg
+2025-02-02 15:41:58,184 - INFO - Processing complete. Results written to embeddings.txt
