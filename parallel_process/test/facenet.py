@@ -1780,8 +1780,7 @@ def resize_image(img: np.ndarray, target_size: Tuple[int, int]) -> np.ndarray:
 
     return img
 
-import concurrent.futures
-from multiprocessing import Process, cpu_count, Lock
+from multiprocessing import Process, Queue, cpu_count, Lock
 import os
 import numpy as np
 import cv2
@@ -1792,103 +1791,64 @@ from tensorflow.keras.preprocessing import image
 import logging
 
 # Configure logging
-logging.basicConfig(filename='facenet_processing.log', level=logging.INFO, 
+logging.basicConfig(level=logging.INFO, 
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
 class FaceNetProcessor:
-    def __init__(self):
+    def __init__(self, queue, input_embedding):
         # Initialize model once per process
         self.FaceNet = load_facenet512d_model()
         self.target_size = (160, 160)  # FaceNet input size
+        self.queue = queue
+        self.input_embedding = input_embedding
 
-    def process_image(self, img_path):
-        try:
-            img = cv2.imread(img_path)
-            if img is None:
-                logging.error(f"Failed to load image: {img_path}")
-                return None, img_path
-            
-            img = np.array(img)
-            img = img[:, :, ::-1]  # BGR to RGB
-            img = resize_image(img, target_size=self.target_size)
-            img = normalize_input(img=img, normalization="Facenet2018")
-            embedding = self.FaceNet.predict(img)  # Using model's predict method
-            return embedding, img_path
-        except Exception as e:
-            logging.error(f"Error processing {img_path}: {str(e)}")
-            return None, img_path
+    def process_faces_from_queue(self):
+        while not self.queue.empty():
+            try:
+                data = self.queue.get()
+                img_path = data['id']
+                face = data['face']
+                
+                img = np.array(face)
+                img = img[:, :, ::-1]  # BGR to RGB
+                img = resize_image(img, target_size=self.target_size)
+                img = normalize_input(img=img, normalization="Facenet2018")
+                embedding = self.FaceNet.predict(img)  # Using model's predict method
+                
+                # Compare with input embedding
+                is_match = self.compare_embeddings(embedding, self.input_embedding)
+                logging.info(f"Processed face from {img_path}, Match: {is_match}")
+            except Exception as e:
+                logging.error(f"Error processing face from queue: {str(e)}")
 
-def process_batch(image_paths, output_file, process_id, file_lock):
-    # Create one FaceNetProcessor instance per process
-    processor = FaceNetProcessor()
-    
-    def process_with_threads(paths):
-        # Use ThreadPoolExecutor for parallel processing within the process
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-            futures = [executor.submit(processor.process_image, path) for path in paths]
-            
-            results = []
-            for future in concurrent.futures.as_completed(futures):
-                embedding, img_path = future.result()
-                if embedding is not None:
-                    results.append((embedding, img_path))
-            
-            # Write results in batch with lock
-            with file_lock:
-                with open(output_file, 'a') as f:
-                    for embedding, img_path in results:
-                        f.write(f"id: {process_id}, image path: {img_path}\n")
-                        logging.info(f"Processed and logged: {img_path}")
-            return len(results)
-    
-    # Process images in smaller batches
-    batch_size = 10
-    total_processed = 0
-    for i in range(0, len(image_paths), batch_size):
-        batch = image_paths[i:i + batch_size]
-        total_processed += process_with_threads(batch)
-    
-    return total_processed
+    def compare_embeddings(self, embedding, input_embedding):
+        # Simple comparison logic, can be replaced with a more sophisticated method
+        distance = np.linalg.norm(embedding - input_embedding)
+        threshold = 0.6  # Example threshold
+        return distance < threshold
 
 def main():
     image_directory = "/Users/guru/proj-git/Face-Finder/parallel_process/test/images"
-    output_file = "embeddings.txt"
-    
-    # Clear output file
-    with open(output_file, 'w') as f:
-        f.write("")
+    input_embedding = np.random.rand(512)  # Example input embedding for comparison
     
     if os.path.exists(image_directory):
-        image_paths = [
-            os.path.join(image_directory, filename) 
-            for filename in os.listdir(image_directory) 
-            if filename.lower().endswith(('.png', '.jpg', '.jpeg'))
-        ]
+        # Create a shared queue
+        queue = Queue()
         
-        # Determine number of processes
-        num_processes = min(cpu_count(), 4)  # Limit to 4 processes
+        # Start the face extraction process
+        face_extraction_process = Process(target=process_images, args=(queue,))
+        face_extraction_process.start()
         
-        # Split images among processes
-        chunks = np.array_split(image_paths, num_processes)
+        # Start the FaceNet processing
+        processor = FaceNetProcessor(queue, input_embedding)
+        processor.process_faces_from_queue()
         
-        # Start processes
-        processes = []
-        file_lock = Lock()  # Ensure file writes are synchronized
-        for i, chunk in enumerate(chunks):
-            p = Process(
-                target=process_batch,
-                args=(chunk.tolist(), output_file, i, file_lock)
-            )
-            processes.append(p)
-            p.start()
+        # Wait for face extraction to complete
+        face_extraction_process.join()
         
-        # Wait for all processes to complete
-        for p in processes:
-            p.join()
-        
-        logging.info(f"Processing complete. Results written to {output_file}")
+        logging.info("Processing complete.")
     else:
         logging.error(f"Directory not found: {image_directory}")
 
 if __name__ == "__main__":
-    main()  
+    main()
